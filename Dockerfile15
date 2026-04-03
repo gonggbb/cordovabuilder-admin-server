@@ -1,0 +1,81 @@
+FROM ubuntu:22.04
+
+
+# 设置环境变量（修改 JAVA_HOME 指向自定义安装路径）
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.UTF-8 \
+    JAVA_HOME=/opt/java/java \
+    ANDROID_HOME=/opt/android-sdk \
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    GRADLE_HOME=/opt/gradle/gradle \
+    ANDROID_BUILD_TOOLS=/opt/android-sdk/build-tools/36.0.0 \
+    # GRADLE_USER_HOME=/opt/gradle/gradle \
+    PATH=$PATH:/opt/gradle/gradle/bin:/opt/android-sdk/tools/bin:/opt/android-sdk/platform-tools:/opt/java/java/bin:/opt/android-sdk/build-tools/36.0.0
+
+    
+# 创建必要的目录并设置权限
+RUN mkdir -p /opt/android-sdk /opt/gradle /opt/nodejs /opt/java && \
+    chmod -R 755 /opt/android-sdk
+
+RUN apt-get update && apt-get install -y unzip xz-utils zip  locales  && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 添加这一行来生成 en_US.UTF-8 locale
+RUN locale-gen en_US.UTF-8 
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
+
+# -------------------------------
+# JDK 17
+# -------------------------------
+COPY env_zip/jdk-17.0.10_linux-x64_bin.tar.gz /opt/java/
+RUN cd /opt/java && \
+    tar -xzf jdk-17.0.10_linux-x64_bin.tar.gz && mv jdk-17.0.10 java && rm jdk-17.0.10_linux-x64_bin.tar.gz
+ENV JAVA_HOME=/opt/java/java PATH=$JAVA_HOME/bin:$PATH
+
+# -------------------------------
+# Node.js >= 20 (Node 20 LTS)
+# -------------------------------
+COPY env_zip/node-v20.19.5-linux-x64.tar.xz /opt/nodejs/
+RUN cd /opt/nodejs && \
+    tar -xJf node-v20.19.5-linux-x64.tar.xz && mv node-v20.19.5-linux-x64 node && \
+    rm node-v20.19.5-linux-x64.tar.xz
+ENV PATH=/opt/nodejs/node/bin:$PATH
+
+# -------------------------------
+# Android SDK + Build Tools 36
+# -------------------------------
+ENV ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk
+COPY env_zip/commandlinetools-linux-14742923_latest.zip /opt/android-sdk/
+RUN cd /opt/android-sdk && unzip commandlinetools-linux-14742923_latest.zip -d cmdline-tools-tmp && \
+    mkdir -p cmdline-tools/latest && \
+    mv cmdline-tools-tmp/cmdline-tools/* cmdline-tools/latest && \
+    rm -rf cmdline-tools-tmp commandlinetools-linux-14742923_latest.zip
+
+RUN yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
+RUN /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+    "platform-tools" \
+    "platforms;android-36" \
+    "build-tools;36.0.0" \
+    "extras;google;m2repository" \
+    "extras;android;m2repository"
+
+# -------------------------------
+# Gradle 8.14.2
+# -------------------------------
+COPY env_zip/gradle-8.14.2-bin.zip /opt/gradle/
+RUN cd /opt/gradle && unzip gradle-8.14.2-bin.zip && mv gradle-8.14.2 gradle
+ENV PATH=/opt/gradle/gradle/bin:$PATH
+
+# -------------------------------
+# Cordova 13
+# -------------------------------
+RUN npm install -g cordova@13.0.0
+# RUN npm install -g cordova@latest
+
+# 只复制存在的文件/目录
+COPY shells/v12/*.sh /opt/app-env/build-scripts/
+
+WORKDIR /workspace
+CMD ["/bin/bash"]
