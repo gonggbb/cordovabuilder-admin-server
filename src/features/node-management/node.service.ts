@@ -1,20 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { execSync } from 'child_process';
-import { promisify } from 'util';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import * as https from 'https';
-import * as http from 'http';
-import { pipeline } from 'stream';
 import {
   isLinux,
   isWindows,
   isMacOS,
   getFileExtensionByPlatform,
 } from '@common/utils/platform.utils';
-
-const pipelineAsync = promisify(pipeline);
+import { downloadFile } from '@common/utils/download.utils';
+import { resolveFromRoot } from '@common/utils/path.utils';
 
 /**
  * Node 管理服务
@@ -22,19 +18,12 @@ const pipelineAsync = promisify(pipeline);
  */
 @Injectable()
 export class NodeService {
-  // 使用环境变量指定的下载目录，如果未设置则使用默认值
-  private readonly downloadDir: string;
-  // 使用环境变量指定的安装目录，如果未设置则使用默认值
-  private readonly nodeInstallDir: string;
-
-  constructor() {
-    this.downloadDir = process.env.DOWNLOAD_DIR
-      ? path.join(process.env.DOWNLOAD_DIR, 'node')
-      : path.join(process.cwd(), 'downloads');
-
-    this.nodeInstallDir =
-      process.env.NODE_INSTALL_DIR || path.join(process.cwd(), 'nodejs');
-  }
+  // 使用环境变量指定的下载目录,如果未设置则使用项目根目录下的
+  private readonly downloadDir = resolveFromRoot(
+    process.env.DOWNLOAD_DIR!, //非空断言运算符（!）
+    process.env.NODE_INSTALL_DIR!,
+  );
+  constructor() {}
 
   // ==================== API 调用方法（公开接口）====================
 
@@ -57,7 +46,7 @@ export class NodeService {
 
     return {
       version: this.getNodeVersion(),
-      installPath: this.nodeInstallDir,
+      installPath: this.downloadDir,
       platform,
       arch,
       isInstalled,
@@ -86,6 +75,12 @@ export class NodeService {
    * https://nodejs.org/dist/v25.9.0/node-v25.9.0-linux-x64.tar.xz
    * https://nodejs.org/dist/v25.9.0/node-v25.9.0-win-x64.zip
    * https://nodejs.org/dist/v25.9.0/node-v25.9.0-darwin-x64.tar.gz
+   * 
+   * 检测到 Node.js 路径: C:\worksapce\cusworksapce\cordovabuilder-admin\cordovabuilder-admin-server\node_modules\.bin
+    开始下载 Node.js v18.16.0...
+    下载 URL: https://nodejs.org/dist/v18.16.0/node-v18.16.0-linux-x64.tar.xz
+    保存路径：C:\worksapce\cusworksapce\cordovabuilder-admin\cordovabuilder-admin-server\downloads\node-install\node-v18.16.0-linux-x64.tar.xz
+
    * 使用 Node.js 原生 HTTP 模块进行跨平台下载
    * @param version - Node.js 版本号 (例如：'v18.16.0')
    * @param platform - 操作系统平台 (例如：'linux', 'win', 'darwin')
@@ -120,7 +115,7 @@ export class NodeService {
       console.log(`保存路径：${outputPath}`);
 
       // 使用 Node.js 原生 HTTP 模块下载（跨平台兼容）
-      await this.downloadFile(downloadUrl, outputPath);
+      await downloadFile(downloadUrl, outputPath);
 
       console.log('下载完成');
 
@@ -256,62 +251,5 @@ export class NodeService {
       console.error('创建下载目录失败:', error);
       throw error;
     }
-  }
-
-  /**
-   * [辅助方法] 下载文件（跨平台兼容）
-   * @param url - 下载 URL
-   * @param dest - 目标文件路径
-   */
-  private async downloadFile(url: string, dest: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const protocol = url.startsWith('https') ? https : http;
-
-      const request = protocol.get(url, (response) => {
-        // 处理重定向
-        if (response.statusCode === 301 || response.statusCode === 302) {
-          const redirectUrl = response.headers.location;
-          if (redirectUrl) {
-            this.downloadFile(redirectUrl, dest).then(resolve).catch(reject);
-          } else {
-            reject(new Error('重定向响应缺少 location 头'));
-          }
-          return;
-        }
-
-        // 检查响应状态码
-        if (response.statusCode !== 200) {
-          reject(new Error(`下载失败，HTTP 状态码：${response.statusCode}`));
-          return;
-        }
-
-        // 创建写入流
-        const fileStream = fs.createWriteStream(dest);
-
-        // 使用 pipeline 连接响应流和文件流
-        pipelineAsync(response, fileStream)
-          .then(() => resolve())
-          .catch((error: unknown) => {
-            // 清理未完成的文件
-            if (fs.existsSync(dest)) {
-              fs.unlinkSync(dest);
-            }
-            const errorMessage =
-              error instanceof Error ? error : new Error(String(error));
-            reject(errorMessage);
-          });
-      });
-
-      // 设置超时时间（5分钟）
-      request.setTimeout(300000, () => {
-        request.destroy();
-        reject(new Error('下载超时'));
-      });
-
-      // 处理请求错误
-      request.on('error', (error) => {
-        reject(error);
-      });
-    });
   }
 }

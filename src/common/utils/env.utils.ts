@@ -2,16 +2,19 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import dotenv from 'dotenv';
+import { getConfigDir } from '@common/utils/path.utils';
+
 /**
  * 根据 PLATFORM 配置加载对应的平台环境文件
  */
 export function loadPlatformConfig(): void {
   // 根目录下的 config 目录路径
-  const configDir = path.resolve(__dirname, '../../../config');
+  const configDir = getConfigDir();
   console.log('configDir:', configDir);
-  console.log('__dirname:', __dirname);
   // 首先加载基础 .env 文件获取 PLATFORM 变量
   const baseEnvPath = path.join(configDir, '.env');
+  console.log('baseEnvPath:', baseEnvPath);
+
   if (fs.existsSync(baseEnvPath)) {
     dotenv.config({ path: baseEnvPath });
   }

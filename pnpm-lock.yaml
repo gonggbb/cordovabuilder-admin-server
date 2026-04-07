@@ -21,8 +21,8 @@ importers:
         specifier: ^11.2.6
         version: 11.2.6(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(reflect-metadata@0.2.2)
       dotenv:
-        specifier: ^17.4.0
-        version: 17.4.0
+        specifier: ^17.4.1
+        version: 17.4.1
       extract-zip:
         specifier: ^2.0.1
         version: 2.0.1
@@ -42,6 +42,9 @@ importers:
       '@eslint/js':
         specifier: ^9.18.0
         version: 9.39.4
+      '@jest/globals':
+        specifier: ^30.3.0
+        version: 30.3.0
       '@nestjs/cli':
         specifier: ^11.0.0
         version: 11.0.17(@types/node@24.12.0)
@@ -1519,8 +1522,8 @@ packages:
     resolution: {integrity: sha512-X07nttJQkwkfKfvTPG/KSnE2OMdcUCao6+eXF3wmnIQRn2aPAHH3VxDbDOdegkd6JbPsXqShpvEOHfAT+nCNwQ==}
     engines: {node: '>=0.3.1'}
 
-  dotenv@17.4.0:
-    resolution: {integrity: sha512-kCKF62fwtzwYm0IGBNjRUjtJgMfGapII+FslMHIjMR5KTnwEmBmWLDRSnc3XSNP8bNy34tekgQyDT0hr7pERRQ==}
+  dotenv@17.4.1:
+    resolution: {integrity: sha512-k8DaKGP6r1G30Lx8V4+pCsLzKr8vLmV2paqEj1Y55GdAgJuIqpRp5FfajGF8KtwMxCz9qJc6wUIJnm053d/WCw==}
     engines: {node: '>=12'}
 
   dunder-proto@1.0.1:
@@ -3951,7 +3954,7 @@ snapshots:
 
   '@types/dotenv@8.2.3':
     dependencies:
-      dotenv: 17.4.0
+      dotenv: 17.4.1
 
   '@types/eslint-scope@3.7.7':
     dependencies:
@@ -4650,7 +4653,7 @@ snapshots:
 
   diff@4.0.4: {}
 
-  dotenv@17.4.0: {}
+  dotenv@17.4.1: {}
 
   dunder-proto@1.0.1:
     dependencies:
