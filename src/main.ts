@@ -2,6 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import * as os from 'os';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { loadPlatformConfig } from '@common/utils/env.utils';
+// 在应用启动前加载平台配置
+loadPlatformConfig();
+
 console.log(
   'Starting CordovaBuilder Admin API Server...',
   process.env.NODE_INSTALL_DIR,
@@ -9,6 +13,7 @@ console.log(
   os.platform(), //win32, linux, darwin
   os.arch(), //x64, arm64
 );
+
 /**
  * 启动并配置 NestJS 应用程序
  * 该函数创建应用程序实例并监听指定端口

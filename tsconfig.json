@@ -9,14 +9,21 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "types": [
+      "node"
+    ],
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@common/*": ["src/common/*"],
-      "@features/*": ["src/features/*"]
+      "@common/*": [
+        "src/common/*"
+      ],
+      "@features/*": [
+        "src/features/*"
+      ]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -25,5 +32,5 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
-  },
+  }
 }

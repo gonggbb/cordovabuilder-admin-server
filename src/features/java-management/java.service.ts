@@ -8,6 +8,10 @@ import * as http from 'http';
 import { pipeline } from 'stream';
 import extractZip from 'extract-zip';
 import { getErrorMessage } from '@common/utils/error.utils';
+import {
+  getJdkPlatformIdentifier,
+  getNormalizedArchName,
+} from '@common/utils/platform.utils';
 
 /**
  * Java 管理服务
@@ -194,20 +198,8 @@ export class JavaService {
     const versionNum = version.replace(/^j?dk-?/i, '');
     const majorVersion = versionNum.split('.')[0];
 
-    const platformMap: Record<string, string> = {
-      linux: 'linux',
-      win32: 'windows',
-      darwin: 'mac',
-    };
-
-    const archMap: Record<string, string> = {
-      x64: 'x64',
-      arm64: 'aarch64',
-      aarch64: 'aarch64',
-    };
-
-    const osName = platformMap[platform];
-    const archName = archMap[arch];
+    const osName = getJdkPlatformIdentifier(platform);
+    const archName = getNormalizedArchName(arch);
 
     if (!osName || !archName) {
       return null;
