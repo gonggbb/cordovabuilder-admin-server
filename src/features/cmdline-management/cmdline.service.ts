@@ -388,6 +388,20 @@ export class CmdlineToolsService {
 
   /**
    * 获取 Command Line Tools 下载 URL
+   * https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+   * Windows	commandlinetools-win-14742923_latest.zip	  150.5 MB	16b3f45ddb3d85ea6bbe6a1c0b47146daf0db450
+   * Mac	    commandlinetools-mac-14742923_latest.zip	  150.7 MB	cc27cca4b84bfdbc7df17e3d0a01d0c640d8ee71
+   * Linux	  commandlinetools-linux-14742923_latest.zip	150.6 MB	48833c34b761c10cb20bcd16582129395d121b27
+   *
+   * 逻辑版本 (Major Version) 建议构建号 (Build Number) 对应包名示例
+   * 8.0  8512546	 commandlinetools-linux-8512546_latest.zip  2022年中
+   * 9.0	9123311  commandlinetools-linux-9123311_latest.zip  2022年底
+   * 10.0 9477386  commandlinetools-linux-9477386_latest.zip  2023年初
+   * 11.0 10406996 commandlinetools-linux-10406996_latest.zip 2023年中  JDK 11
+   * 12.0 11076708 commandlinetools-linux-11076708_latest.zip 2024年初  JDK 17 或更高版本
+   * 13.0 11425191 commandlinetools-linux-11425191_latest.zip
+   * 14.0 11708174 commandlinetools-linux-11708174_latest.zip
+   * 15.0 12328220 commandlinetools-linux-12328220_latest.zip
    * @param version - 版本号
    * @param platform - 平台
    * @returns 下载 URL
@@ -396,6 +410,7 @@ export class CmdlineToolsService {
     version?: string,
     platform?: string,
   ): string | null {
+    const baseUrl = 'https://dl.google.com/android/repository';
     const currentPlatform = platform || os.platform();
 
     // 默认使用最新版本
@@ -413,7 +428,7 @@ export class CmdlineToolsService {
     }
 
     // Google 官方 Command Line Tools 下载 URL
-    return `https://dl.google.com/android/repository/commandlinetools-${osName}-${versionNum}_latest.zip`;
+    return `${baseUrl}/commandlinetools-${osName}-${versionNum}_latest.zip`;
   }
 
   /**

@@ -69,8 +69,8 @@ export class JavaController {
   @ApiQuery({
     name: 'version',
     required: true,
-    description: 'JDK 版本号，例如：jdk-17.0.10',
-    example: 'jdk-17.0.10',
+    description: 'JDK 版本号，例如：17.0.12_7',
+    example: '17.0.12_7',
   })
   @ApiQuery({
     name: 'platform',
@@ -91,8 +91,8 @@ export class JavaController {
       example: {
         success: true,
         message:
-          'JDK jdk-17.0.10 已成功下载到 /path/to/downloads/jdk-17.0.10_linux-x64_bin.tar.gz',
-        path: '/path/to/downloads/jdk-17.0.10_linux-x64_bin.tar.gz',
+          'JDK 17.0.12_7 已成功下载到 /path/to/downloads/17.0.12_7_linux-x64_bin.tar.gz',
+        path: '/path/to/downloads/17.0.12_7_linux-x64_bin.tar.gz',
       },
     },
   })
@@ -102,7 +102,7 @@ export class JavaController {
     schema: {
       example: {
         success: false,
-        message: '请提供 JDK 版本号 (例如：jdk-17.0.10)',
+        message: '请提供 JDK 版本号 (例如：17.0.12_7)',
       },
     },
   })
@@ -114,7 +114,7 @@ export class JavaController {
     if (!version) {
       return {
         success: false,
-        message: '请提供 JDK 版本号 (例如：jdk-17.0.10)',
+        message: '请提供 JDK 版本号 (例如：17.0.12_7)',
       };
     }
 

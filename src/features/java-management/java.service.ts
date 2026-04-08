@@ -3,8 +3,6 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as zlib from 'zlib';
-import * as https from 'https';
-import * as http from 'http';
 import { pipeline } from 'stream';
 import extractZip from 'extract-zip';
 import { getErrorMessage } from '@common/utils/error.utils';
@@ -12,6 +10,9 @@ import {
   getJdkPlatformIdentifier,
   getNormalizedArchName,
 } from '@common/utils/platform.utils';
+import { getLogger } from '@common/utils/logger.utils';
+import { DownloadDirManager } from '@features/file-management';
+import { downloadFile } from '@common/utils/download.utils';
 
 /**
  * Java 管理服务
@@ -21,28 +22,19 @@ import {
 export class JavaService {
   private readonly javaInstallDir: string;
   private readonly downloadDir: string;
+  private readonly logger = getLogger('JavaService');
 
-  constructor() {
-    // 使用环境变量指定的安装目录，如果未设置则根据平台设置默认路径
-    const platform = os.platform();
-
-    this.javaInstallDir =
-      process.env.JAVA_INSTALL_DIR ||
-      (platform === 'linux'
-        ? '/opt/java/java'
-        : platform === 'win32'
-          ? path.join('C:', 'Program Files', 'Java', 'jdk')
-          : path.join(os.homedir(), '.java'));
+  constructor(private readonly fileManager: DownloadDirManager) {
+    this.javaInstallDir = this.fileManager.getComponentExtractDir(
+      process.env.JAVA_HOME!,
+    );
 
     // 使用环境变量指定的下载目录，如果未设置则使用默认值
-    this.downloadDir = process.env.DOWNLOAD_DIR
-      ? path.join(process.env.DOWNLOAD_DIR, 'java')
-      : path.join(os.tmpdir(), 'java-downloads');
-
-    // 确保下载目录存在
-    if (!fs.existsSync(this.downloadDir)) {
-      fs.mkdirSync(this.downloadDir, { recursive: true });
-    }
+    this.downloadDir = this.fileManager.getComponentDownloadDir(
+      process.env.JAVA_INSTALL_DIR!,
+    );
+    // C:\Users\user\AppData\Local\Temp
+    this.logger.debug(`JavaService 下载目录: ${os.tmpdir()}`);
   }
 
   /**
@@ -123,7 +115,9 @@ export class JavaService {
       const fileName = path.basename(downloadUrl);
       const filePath = path.join(this.downloadDir, fileName);
 
-      await this.downloadFile(downloadUrl, filePath);
+      // await this.downloadFile(downloadUrl, filePath);
+      // await this.downloadFile(downloadUrl, filePath);
+      await downloadFile(downloadUrl, filePath);
 
       return {
         success: true,
@@ -183,6 +177,13 @@ export class JavaService {
 
   /**
    * 获取 JDK 下载 URL
+   * 免费 OpenJDK 发行版：如 Adoptium、Amazon Corretto、Azul Zulu 等，这些版本提供长期免费商用授权，避免 Oracle 的收费政策限制。
+   * Adoptium (Temurin) JDK 下载 URL 格式示例：
+   * https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_linux_hotspot_17.0.12_7.tar.gz
+     https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.29%2B7/OpenJDK11U-jdk_x64_linux_hotspot_11.0.29_7.tar.gz
+   * Oracle JDK 不适用
+   * https://www.oracle.com/java/technologies/downloads/archive/
+   * https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz
    * @param version - 版本号
    * @param platform - 平台
    * @param arch - 架构
@@ -193,57 +194,29 @@ export class JavaService {
     platform: string,
     arch: string,
   ): string | null {
-    // 这里可以根据不同的 JDK 提供商（Oracle、OpenJDK、Adoptium 等）返回不同的 URL
-    // 示例：使用 Adoptium (Temurin) JDK
-    const versionNum = version.replace(/^j?dk-?/i, '');
+    // 11.0.30+7 -> 11.0.30_7
+    const versionNum = version.replace(/^j?dk-?/i, '').replace(/\+/g, '_');
+    // 11.0.30_7 -> 11.0.30%2B7
+    const decodeVersionNum = versionNum.replace(/_/g, '%2B');
+
     const majorVersion = versionNum.split('.')[0];
+    this.logger.debug(
+      `构建 JDK 下载 URL，version=${version}, platform=${platform}, arch=${arch}`,
+    );
 
     const osName = getJdkPlatformIdentifier(platform);
     const archName = getNormalizedArchName(arch);
-
+    this.logger.debug(
+      `构建 JDK 下载 URL，osName=${osName}, archName=${archName}`,
+    );
     if (!osName || !archName) {
       return null;
     }
+    const downloadUrl = `https://github.com/adoptium/temurin${majorVersion}-binaries/releases/download/jdk-${decodeVersionNum}/OpenJDK${majorVersion}U-jdk_${archName}_${osName}_hotspot_${versionNum}.tar.gz`;
 
+    this.logger.debug(`构建 JDK 下载 URL，${downloadUrl}`);
     // Adoptium Temurin JDK 下载 URL 格式
-    return `https://github.com/adoptium/temurin${majorVersion}-binaries/releases/download/jdk-${versionNum}%2B/OpenJDK${majorVersion}U-jdk_${osName}_${archName}_hotspot_${versionNum}.tar.gz`;
-  }
-
-  /**
-   * 下载文件
-   * @param url - 下载 URL
-   * @param dest - 目标路径
-   */
-  private async downloadFile(url: string, dest: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const protocol = url.startsWith('https') ? https : http;
-
-      protocol
-        .get(url, (response) => {
-          if (response.statusCode === 301 || response.statusCode === 302) {
-            // 处理重定向
-            this.downloadFile(response.headers.location!, dest)
-              .then(resolve)
-              .catch(reject);
-            return;
-          }
-
-          if (response.statusCode !== 200) {
-            reject(new Error(`下载失败，HTTP 状态码：${response.statusCode}`));
-            return;
-          }
-
-          const fileStream = fs.createWriteStream(dest);
-          pipeline(response, fileStream, (err) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          });
-        })
-        .on('error', reject);
-    });
+    return downloadUrl;
   }
 
   /**

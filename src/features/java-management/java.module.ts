@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JavaController } from './java.controller';
 import { JavaService } from './java.service';
+import { FileManagementModule } from '@features/file-management';
 
 /**
  * Java 管理模块
@@ -11,7 +12,7 @@ import { JavaService } from './java.service';
  * @module JavaManagementModule
  */
 @Module({
-  imports: [],
+  imports: [FileManagementModule],
   controllers: [JavaController],
   providers: [JavaService],
   exports: [JavaService],
