@@ -6,8 +6,8 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import extractZip from 'extract-zip';
 import { getLogger } from '@common/utils/logger.utils';
-import { resolveFromRoot } from '@common/utils/path.utils';
 import { downloadFile } from '@common/utils/download.utils';
+import { DownloadDirManager } from '@features/file-management';
 
 const execAsync = promisify(exec);
 
@@ -22,26 +22,24 @@ export class CmdlineToolsService {
   private readonly downloadDir: string;
   private readonly logger = getLogger('CmdlineToolsService');
 
-  constructor() {
+  constructor(private readonly fileManager: DownloadDirManager) {
     // 使用环境变量指定的 SDK 根目录，如果未设置则根据平台设置默认路径
 
-    this.sdkRoot = resolveFromRoot(
-      process.env.ANDROID_HOME!, //非空断言运算符（!）
+    this.sdkRoot = this.fileManager.getComponentExtractDir(
+      process.env.ANDROID_HOME!,
     );
 
-    this.logger.debug(`Android SDK 根目录：${this.sdkRoot}`);
+    this.logger.debug(`Android SDK 根目录 sdkRoot：${this.sdkRoot}`);
     this.cmdlineToolsDir = path.join(this.sdkRoot, 'cmdline-tools');
 
-    // 使用环境变量指定的下载目录，如果未设置则使用默认值
-    this.downloadDir = resolveFromRoot(
-      process.env.DOWNLOAD_DIR!,
-      process.env.CMDLINE_TOOLS_INSTALL_DIR!,
+    this.logger.debug(
+      `Android SDK 根目录 cmdlineTools Dir：${this.cmdlineToolsDir}`,
     );
 
-    // 确保下载目录存在
-    if (!fs.existsSync(this.downloadDir)) {
-      fs.mkdirSync(this.downloadDir, { recursive: true });
-    }
+    // 使用环境变量指定的下载目录，如果未设置则使用默认值
+    this.downloadDir = this.fileManager.getComponentDownloadDir(
+      process.env.CMDLINE_TOOLS_INSTALL_DIR!,
+    );
   }
 
   /**

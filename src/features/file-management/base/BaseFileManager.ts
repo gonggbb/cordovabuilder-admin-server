@@ -15,7 +15,7 @@ export abstract class BaseFileManager implements IFileManager {
   }
 
   /**
-   * [API] 检查文件或目录是否存在
+   * 检查文件或目录是否存在
    * @param targetPath - 目标路径
    * @returns 是否存在
    */
@@ -24,7 +24,7 @@ export abstract class BaseFileManager implements IFileManager {
       return fs.existsSync(targetPath);
     } catch (error) {
       this.logger.error(
-        '[API] exists - 检查路径失败',
+        'BaseFileManager exists - 检查路径失败',
         error instanceof Error ? error.message : String(error),
       );
       return false;
@@ -32,21 +32,25 @@ export abstract class BaseFileManager implements IFileManager {
   }
 
   /**
-   * [API] 确保目录存在,如果不存在则创建
+   * 确保目录存在,如果不存在则创建
    * @param dirPath - 目录路径
    * @param recursive - 是否递归创建父目录(默认为 true)
    */
   ensureDirectory(dirPath: string, recursive = true): void {
     try {
       if (!fs.existsSync(dirPath)) {
-        this.logger.debug(`[API] ensureDirectory - 创建目录: ${dirPath}`);
+        this.logger.debug(
+          `BaseFileManager ensureDirectory - 创建目录: ${dirPath}`,
+        );
         fs.mkdirSync(dirPath, { recursive });
       } else {
-        this.logger.debug(`[API] ensureDirectory - 目录已存在: ${dirPath}`);
+        this.logger.debug(
+          `BaseFileManager ensureDirectory - 目录已存在: ${dirPath}`,
+        );
       }
     } catch (error) {
       this.logger.error(
-        '[API] ensureDirectory - 创建目录失败',
+        'BaseFileManager ensureDirectory - 创建目录失败',
         error instanceof Error ? error.message : String(error),
       );
       throw error;
@@ -54,24 +58,26 @@ export abstract class BaseFileManager implements IFileManager {
   }
 
   /**
-   * [API] 确保文件存在,如果不存在则创建空文件
+   * 确保文件存在,如果不存在则创建空文件
    * @param filePath - 文件路径
    */
   ensureFile(filePath: string): void {
     try {
       if (!fs.existsSync(filePath)) {
-        this.logger.debug(`[API] ensureFile - 创建文件: ${filePath}`);
+        this.logger.debug(`BaseFileManager ensureFile - 创建文件: ${filePath}`);
         // 确保父目录存在
         const dirPath = path.dirname(filePath);
         this.ensureDirectory(dirPath);
         // 创建空文件
         fs.writeFileSync(filePath, '');
       } else {
-        this.logger.debug(`[API] ensureFile - 文件已存在: ${filePath}`);
+        this.logger.debug(
+          `BaseFileManager ensureFile - 文件已存在: ${filePath}`,
+        );
       }
     } catch (error) {
       this.logger.error(
-        '[API] ensureFile - 创建文件失败',
+        'BaseFileManager ensureFile - 创建文件失败',
         error instanceof Error ? error.message : String(error),
       );
       throw error;
@@ -79,21 +85,21 @@ export abstract class BaseFileManager implements IFileManager {
   }
 
   /**
-   * [API] 删除文件或目录
+   * 删除文件或目录
    * @param targetPath - 目标路径
    * @param recursive - 是否为目录时递归删除(默认为 true)
    */
   remove(targetPath: string, recursive = true): void {
     try {
       if (fs.existsSync(targetPath)) {
-        this.logger.debug(`[API] remove - 删除: ${targetPath}`);
+        this.logger.debug(`BaseFileManager remove - 删除: ${targetPath}`);
         fs.rmSync(targetPath, { recursive, force: true });
       } else {
-        this.logger.debug(`[API] remove - 路径不存在: ${targetPath}`);
+        this.logger.debug(`BaseFileManager remove - 路径不存在: ${targetPath}`);
       }
     } catch (error) {
       this.logger.error(
-        '[API] remove - 删除失败',
+        'BaseFileManager remove - 删除失败',
         error instanceof Error ? error.message : String(error),
       );
       throw error;
@@ -101,7 +107,7 @@ export abstract class BaseFileManager implements IFileManager {
   }
 
   /**
-   * [API] 获取文件或目录信息
+   * 获取文件或目录信息
    * @param targetPath - 目标路径
    * @returns 文件统计信息,如果不存在返回 null
    */
@@ -113,7 +119,7 @@ export abstract class BaseFileManager implements IFileManager {
       return fs.statSync(targetPath);
     } catch (error) {
       this.logger.error(
-        '[API] getStats - 获取文件信息失败',
+        'BaseFileManager getStats - 获取文件信息失败',
         error instanceof Error ? error.message : String(error),
       );
       return null;

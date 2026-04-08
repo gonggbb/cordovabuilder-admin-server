@@ -28,7 +28,7 @@ export function loadPlatformConfig(): void {
   const platform = process.env.PLATFORM || os.platform();
 
   if (!platform) {
-    logger.log(`未设置 PLATFORM，自动检测到当前平台: ${platform}`);
+    logger.warn(`未设置 PLATFORM，自动检测到当前平台: ${platform}`);
   }
 
   // 根据平台加载对应的配置文件

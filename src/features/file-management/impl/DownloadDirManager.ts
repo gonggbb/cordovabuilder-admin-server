@@ -11,6 +11,8 @@ import { resolveFromRoot } from '@common/utils/path.utils';
 @Injectable()
 export class DownloadDirManager extends BaseFileManager {
   private readonly downloadBaseDir: string;
+  // 解压目录
+  private readonly extractDir: string;
 
   constructor() {
     super('DownloadDirManager'); // 传递 logger 上下文
@@ -20,6 +22,21 @@ export class DownloadDirManager extends BaseFileManager {
     );
     // 确保基础下载目录存在
     this.ensureDirectory(this.downloadBaseDir);
+    this.logger.debug(`DownloadDirManager 下载根目录: ${this.downloadBaseDir}`);
+    // 解压目录
+    this.extractDir = resolveFromRoot(process.env.EXTRACT_DIR || 'extract');
+    this.ensureDirectory(this.extractDir);
+    this.logger.debug(`DownloadDirManager 解压目录: ${this.extractDir}`);
+  }
+
+  /**
+   * [API] 确保解压目录存在,如果不存在则创建
+   * @param dirPath - 解压目录路径
+   */
+  getComponentExtractDir(componentName: string): string {
+    const componentDir = path.join(this.extractDir, componentName);
+    this.ensureDirectory(componentDir);
+    return componentDir;
   }
 
   /**
