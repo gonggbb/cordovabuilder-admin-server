@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NodeController } from './node.controller';
 import { NodeService } from './node.service';
+import { FileManagementModule } from '@features/file-management';
 
 /**
  * Node 管理模块
@@ -11,7 +12,7 @@ import { NodeService } from './node.service';
  * @module NodeManagementModule
  */
 @Module({
-  imports: [],
+  imports: [FileManagementModule],
   controllers: [NodeController],
   providers: [NodeService],
 })

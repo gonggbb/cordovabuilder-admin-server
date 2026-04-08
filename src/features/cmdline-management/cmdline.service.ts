@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as https from 'https';
-import * as http from 'http';
-import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import extractZip from 'extract-zip';
+import { getLogger } from '@common/utils/logger.utils';
+import { resolveFromRoot } from '@common/utils/path.utils';
+import { downloadFile } from '@common/utils/download.utils';
 
 const execAsync = promisify(exec);
 
@@ -20,27 +20,23 @@ export class CmdlineToolsService {
   private readonly sdkRoot: string;
   private readonly cmdlineToolsDir: string;
   private readonly downloadDir: string;
+  private readonly logger = getLogger('CmdlineToolsService');
 
   constructor() {
     // 使用环境变量指定的 SDK 根目录，如果未设置则根据平台设置默认路径
-    const platform = os.platform();
 
-    this.sdkRoot =
-      process.env.ANDROID_HOME ||
-      (platform === 'linux'
-        ? '/opt/android-sdk'
-        : platform === 'win32'
-          ? path.join('C:', 'Android', 'android-sdk')
-          : path.join(os.homedir(), 'Library', 'Android', 'sdk'));
+    this.sdkRoot = resolveFromRoot(
+      process.env.ANDROID_HOME!, //非空断言运算符（!）
+    );
 
-    this.cmdlineToolsDir =
-      process.env.CMDLINE_TOOLS_PATH ||
-      path.join(this.sdkRoot, 'cmdline-tools');
+    this.logger.debug(`Android SDK 根目录：${this.sdkRoot}`);
+    this.cmdlineToolsDir = path.join(this.sdkRoot, 'cmdline-tools');
 
     // 使用环境变量指定的下载目录，如果未设置则使用默认值
-    this.downloadDir = process.env.DOWNLOAD_DIR
-      ? path.join(process.env.DOWNLOAD_DIR, 'cmdline-tools')
-      : path.join(os.tmpdir(), 'cmdline-tools-downloads');
+    this.downloadDir = resolveFromRoot(
+      process.env.DOWNLOAD_DIR!,
+      process.env.CMDLINE_TOOLS_INSTALL_DIR!,
+    );
 
     // 确保下载目录存在
     if (!fs.existsSync(this.downloadDir)) {
@@ -132,7 +128,8 @@ export class CmdlineToolsService {
       const fileName = path.basename(downloadUrl);
       const filePath = path.join(this.downloadDir, fileName);
 
-      await this.downloadFile(downloadUrl, filePath);
+      // await this.downloadFile(downloadUrl, filePath);
+      await downloadFile(downloadUrl, filePath);
 
       return {
         success: true,
@@ -419,42 +416,6 @@ export class CmdlineToolsService {
 
     // Google 官方 Command Line Tools 下载 URL
     return `https://dl.google.com/android/repository/commandlinetools-${osName}-${versionNum}_latest.zip`;
-  }
-
-  /**
-   * 下载文件
-   * @param url - 下载 URL
-   * @param dest - 目标路径
-   */
-  private async downloadFile(url: string, dest: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const protocol = url.startsWith('https') ? https : http;
-
-      protocol
-        .get(url, (response) => {
-          if (response.statusCode === 301 || response.statusCode === 302) {
-            this.downloadFile(response.headers.location!, dest)
-              .then(resolve)
-              .catch(reject);
-            return;
-          }
-
-          if (response.statusCode !== 200) {
-            reject(new Error(`下载失败，HTTP 状态码：${response.statusCode}`));
-            return;
-          }
-
-          const fileStream = fs.createWriteStream(dest);
-          pipeline(response, fileStream, (err) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          });
-        })
-        .on('error', reject);
-    });
   }
 
   /**

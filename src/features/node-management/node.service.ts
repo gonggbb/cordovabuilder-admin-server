@@ -10,8 +10,8 @@ import {
   getFileExtensionByPlatform,
 } from '@common/utils/platform.utils';
 import { downloadFile } from '@common/utils/download.utils';
-import { resolveFromRoot } from '@common/utils/path.utils';
 import { getLogger } from '@common/utils/logger.utils';
+import { DownloadDirManager } from '@features/file-management';
 
 /**
  * Node 管理服务
@@ -20,13 +20,17 @@ import { getLogger } from '@common/utils/logger.utils';
 @Injectable()
 export class NodeService {
   private readonly logger = getLogger('NodeService');
+  private readonly downloadDir: string;
 
-  // 使用环境变量指定的下载目录,如果未设置则使用项目根目录下的
-  private readonly downloadDir = resolveFromRoot(
-    process.env.DOWNLOAD_DIR!, //非空断言运算符（!）
-    process.env.NODE_INSTALL_DIR!,
-  );
-  constructor() {}
+  constructor(private readonly fileManager: DownloadDirManager) {
+    // 使用文件管理器获取 Node.js 的下载目录
+    this.downloadDir = this.fileManager.getComponentDownloadDir(
+      process.env.NODE_INSTALL_DIR!,
+    );
+    this.logger.debug(
+      `[API] NodeService - Node.js 下载目录: ${this.downloadDir}`,
+    );
+  }
 
   // ==================== API 调用方法（公开接口）====================
 
@@ -110,17 +114,17 @@ export class NodeService {
       const fileName = this.getFileName(version, platform, arch);
       const outputPath = path.join(this.downloadDir, fileName);
 
-      // 确保下载目录存在
-      this.ensureDownloadDir();
+      // 确保下载目录存在 (使用文件管理器)
+      this.fileManager.ensureDirectory(this.downloadDir);
 
-      this.logger.log(`开始下载 Node.js ${version}...`);
-      this.logger.debug(`下载 URL: ${downloadUrl}`);
-      this.logger.debug(`保存路径：${outputPath}`);
+      this.logger.log(`[API] downloadNode - 开始下载 Node.js ${version}...`);
+      this.logger.debug(`[API] downloadNode - 下载 URL: ${downloadUrl}`);
+      this.logger.debug(`[API] downloadNode - 保存路径：${outputPath}`);
 
       // 使用 Node.js 原生 HTTP 模块下载（跨平台兼容）
       await downloadFile(downloadUrl, outputPath);
 
-      this.logger.log('下载完成');
+      this.logger.log('[API] downloadNode - 下载完成');
 
       return {
         success: true,
@@ -128,7 +132,7 @@ export class NodeService {
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      this.logger.error(`下载失败: ${errorMessage}`);
+      this.logger.error(`[API] downloadNode - 下载失败: ${errorMessage}`);
       return {
         success: false,
         message: `下载失败：${errorMessage}`,
@@ -193,6 +197,9 @@ export class NodeService {
 
   /**
    * [辅助方法] 构建 Node.js 下载 URL
+   * https://nodejs.org/dist/v25.9.0/node-v25.9.0-linux-x64.tar.xz
+   * https://nodejs.org/dist/v25.9.0/node-v25.9.0-win-x64.zip
+   * https://nodejs.org/dist/v25.9.0/node-v25.9.0-darwin-x64.tar.gz
    * @param version - 版本号
    * @param platform - 平台
    * @param arch - 架构
@@ -214,7 +221,7 @@ export class NodeService {
     } else if (isWindows(platform)) {
       return `${baseUrl}/${normalizedVersion}/node-${normalizedVersion}-win-${arch}.zip`;
     } else if (isMacOS(platform)) {
-      return `${baseUrl}/${normalizedVersion}/node-${normalizedVersion}.pkg`;
+      return `${baseUrl}/${normalizedVersion}/node-${normalizedVersion}-darwin-${arch}.tar.gz`;
     }
 
     return null;
