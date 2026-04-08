@@ -2,9 +2,6 @@ import { Injectable } from '@nestjs/common';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as zlib from 'zlib';
-import { pipeline } from 'stream';
-import extractZip from 'extract-zip';
 import { getErrorMessage } from '@common/utils/error.utils';
 import {
   getJdkPlatformIdentifier,
@@ -13,6 +10,7 @@ import {
 import { getLogger } from '@common/utils/logger.utils';
 import { DownloadDirManager } from '@features/file-management';
 import { downloadFile } from '@common/utils/download.utils';
+import { extractArchive } from '@common/utils/archive.utils';
 
 /**
  * Java 管理服务
@@ -151,17 +149,8 @@ export class JavaService {
         fs.mkdirSync(parentDir, { recursive: true });
       }
 
-      // 根据文件扩展名选择解压方式
-      if (archivePath.endsWith('.tar.gz')) {
-        await this.extractTarGz(archivePath, targetPath);
-      } else if (archivePath.endsWith('.zip')) {
-        await this.extractZip(archivePath, targetPath);
-      } else {
-        return {
-          success: false,
-          message: `不支持的压缩格式：${archivePath}`,
-        };
-      }
+      // 使用通用工具解压
+      await extractArchive(archivePath, targetPath);
 
       return {
         success: true,
@@ -217,40 +206,5 @@ export class JavaService {
     this.logger.debug(`构建 JDK 下载 URL，${downloadUrl}`);
     // Adoptium Temurin JDK 下载 URL 格式
     return downloadUrl;
-  }
-
-  /**
-   * 解压 tar.gz 文件
-   * @param filePath - 压缩文件路径
-   * @param destPath - 解压目标路径
-   */
-  private async extractTarGz(
-    filePath: string,
-    destPath: string,
-  ): Promise<void> {
-    const gunzip = zlib.createGunzip();
-    const tar = await import('tar');
-    const extract = tar.extract({ cwd: destPath });
-
-    const inputStream = fs.createReadStream(filePath);
-
-    return new Promise((resolve, reject) => {
-      pipeline(inputStream, gunzip, extract, (err) => {
-        if (err) {
-          reject(new Error(getErrorMessage(err)));
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
-  /**
-   * 解压 zip 文件
-   * @param filePath - 压缩文件路径
-   * @param destPath - 解压目标路径
-   */
-  private async extractZip(filePath: string, destPath: string): Promise<void> {
-    await extractZip(filePath, { dir: destPath });
   }
 }

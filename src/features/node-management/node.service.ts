@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
-import * as fs from 'fs';
 import {
   isLinux,
   isWindows,
@@ -254,22 +253,5 @@ export class NodeService {
     }
 
     return `node-${normalizedVersion}`;
-  }
-
-  /**
-   * [辅助方法] 确保下载目录存在
-   */
-  private ensureDownloadDir(): void {
-    try {
-      if (!fs.existsSync(this.downloadDir)) {
-        fs.mkdirSync(this.downloadDir, { recursive: true });
-      }
-    } catch (error) {
-      this.logger.error(
-        '创建下载目录失败',
-        error instanceof Error ? error.stack : String(error),
-      );
-      throw error;
-    }
   }
 }

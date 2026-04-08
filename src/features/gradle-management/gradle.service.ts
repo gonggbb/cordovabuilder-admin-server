@@ -6,6 +6,7 @@ import * as os from 'os';
 import { DownloadDirManager } from '@features/file-management';
 import { getLogger } from '@common/utils/logger.utils';
 import { downloadFile } from '@common/utils/download.utils';
+import { extractArchive } from '@common/utils/archive.utils';
 
 /**
  * Gradle 管理服务
