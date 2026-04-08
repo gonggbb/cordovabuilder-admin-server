@@ -55,6 +55,7 @@ async function probeUrl(url: string): Promise<boolean> {
 
 /**
  * [辅助方法] 下载文件(跨平台兼容)
+ *  HTTP 状态码：307"
  * @param url - 下载 URL
  * @param dest - 目标文件路径
  */
@@ -75,8 +76,13 @@ export async function downloadFile(url: string, dest: string): Promise<void> {
     const protocol = url.startsWith('https') ? https : http;
 
     const request = protocol.get(url, (response) => {
-      // 处理重定向
-      if (response.statusCode === 301 || response.statusCode === 302) {
+      // 处理重定向 (301, 302, 307, 308)
+      if (
+        response.statusCode === 301 ||
+        response.statusCode === 302 ||
+        response.statusCode === 307 ||
+        response.statusCode === 308
+      ) {
         const redirectUrl = response.headers.location;
         if (redirectUrl) {
           downloadFile(redirectUrl, dest).then(resolve).catch(reject);

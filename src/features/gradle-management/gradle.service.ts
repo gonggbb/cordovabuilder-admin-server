@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { execSync } from 'child_process';
-import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import * as https from 'https';
-import * as http from 'http';
-import { pipeline } from 'stream';
-
-const pipelineAsync = promisify(pipeline);
+import { DownloadDirManager } from '@features/file-management';
+import { getLogger } from '@common/utils/logger.utils';
+import { downloadFile } from '@common/utils/download.utils';
 
 /**
  * Gradle 管理服务
@@ -18,28 +15,20 @@ const pipelineAsync = promisify(pipeline);
 export class GradleService {
   private readonly gradleInstallDir: string;
   private readonly downloadDir: string;
+  private readonly logger = getLogger('GradleService');
 
-  constructor() {
+  constructor(private readonly fileManager: DownloadDirManager) {
     // 使用环境变量指定的安装目录，如果未设置则根据平台设置默认路径
-    const platform = os.platform();
 
-    this.gradleInstallDir =
-      process.env.GRADLE_INSTALL_DIR ||
-      (platform === 'linux'
-        ? '/opt/gradle'
-        : platform === 'win32'
-          ? path.join('C:', 'Gradle')
-          : path.join(os.homedir(), '.gradle'));
+    this.gradleInstallDir = fileManager.getComponentExtractDir(
+      process.env.GRADLE_HOME!,
+    );
 
     // 使用环境变量指定的下载目录，如果未设置则使用默认值
-    this.downloadDir = process.env.DOWNLOAD_DIR
-      ? path.join(process.env.DOWNLOAD_DIR, 'gradle')
-      : path.join(process.cwd(), 'downloads');
-
-    // 确保下载目录存在
-    if (!fs.existsSync(this.downloadDir)) {
-      fs.mkdirSync(this.downloadDir, { recursive: true });
-    }
+    this.downloadDir = fileManager.getComponentDownloadDir(
+      process.env.GRADLE_INSTALL_DIR!,
+    );
+    this.logger.debug(`GradleService 下载目录: ${this.downloadDir}`);
   }
 
   /**
@@ -123,6 +112,11 @@ export class GradleService {
 
   /**
    * 下载指定版本的 Gradle
+   * "success": false,"message": "下载 Gradle 失败：下载失败，HTTP 状态码：307"
+   * 可能的重定向链:
+     1. github.com → 307 → github-releases.githubusercontent.com
+     2. github-releases.githubusercontent.com → 302 → s3.amazonaws.com
+     3. s3.amazonaws.com → 200 OK (开始下载)
    * @param version - Gradle 版本号 (例如：'8.5')
    * @returns 下载结果
    */
@@ -131,6 +125,7 @@ export class GradleService {
   ): Promise<{ success: boolean; message: string; path?: string }> {
     try {
       const downloadUrl = this.getGradleDownloadUrl(version);
+      this.logger.debug(`downloadUrl ${downloadUrl}`);
 
       if (!downloadUrl) {
         return {
@@ -142,7 +137,9 @@ export class GradleService {
       const fileName = path.basename(downloadUrl);
       const filePath = path.join(this.downloadDir, fileName);
 
-      await this.downloadFile(downloadUrl, filePath);
+      // await this.downloadFile(downloadUrl, filePath);
+      this.logger.debug(`开始下载 Gradle ${version} 到 ${filePath}`);
+      await downloadFile(downloadUrl, filePath);
 
       return {
         success: true,
@@ -216,46 +213,32 @@ export class GradleService {
 
   /**
    * 获取 Gradle 下载 URL
-   * @param version - 版本号
+   * https://github.com/gradle/gradle-distributions/releases
+   * https://github.com/gradle/gradle-distributions/releases/download/v9.4.1/gradle-9.4.1-bin.zip
+   * https://github.com/gradle/gradle-distributions/releases/download/v8.5.0/gradle-8.5-all.zip
+   * {
+  "success": false,
+  "message": "下载 Gradle 失败：URL 不可达或不存在：https://github.com/gradle/gradle-distributions/releases/download/v8.5.0/gradle-8.5.0-all.zip"
+}
+   * @param version - 版本号 (例如: '9.4.1', 'v9.4.1', '8.5')
    * @returns 下载 URL
    */
   private getGradleDownloadUrl(version: string): string {
-    const baseUrl = 'https://services.gradle.org/distributions';
-    return `${baseUrl}/gradle-${version}-bin.zip`;
-  }
+    // 去除 'v' 前缀,统一处理
+    const tag = version.replace(/^v/i, '');
 
-  /**
-   * 下载文件
-   * @param url - 下载 URL
-   * @param dest - 目标路径
-   */
-  private async downloadFile(url: string, dest: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const protocol = url.startsWith('https') ? https : http;
-
-      protocol
-        .get(url, (response) => {
-          if (response.statusCode === 301 || response.statusCode === 302) {
-            this.downloadFile(response.headers.location!, dest)
-              .then(resolve)
-              .catch(reject);
-            return;
-          }
-
-          if (response.statusCode !== 200) {
-            reject(new Error(`下载失败，HTTP 状态码：${response.statusCode}`));
-            return;
-          }
-
-          const fileStream = fs.createWriteStream(dest);
-          pipelineAsync(response, fileStream)
-            .then(() => resolve())
-            .catch((err) =>
-              reject(err instanceof Error ? err : new Error(String(err))),
-            );
-        })
-        .on('error', reject);
-    });
+    // 标准化版本号格式: 确保是 x.y.z 格式
+    const parts = tag.split('.');
+    while (parts.length < 3) {
+      parts.push('0'); // 补0,如 8.5 → 8.5.0
+    }
+    // GitHub Releases 标签格式: v + 标准化版本号
+    const normalizedVersion = `v${parts.join('.')}`;
+    this.logger.debug(`Normalized version: ${normalizedVersion}, Tag: ${tag}`);
+    // 构建 GitHub Releases 下载 URL
+    const baseUrl =
+      'https://github.com/gradle/gradle-distributions/releases/download';
+    return `${baseUrl}/${normalizedVersion}/gradle-${tag}-all.zip`;
   }
 
   /**

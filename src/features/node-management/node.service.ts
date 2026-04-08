@@ -21,14 +21,21 @@ import { DownloadDirManager } from '@features/file-management';
 export class NodeService {
   private readonly logger = getLogger('NodeService');
   private readonly downloadDir: string;
+  private readonly nodeInstallDir: string;
 
   constructor(private readonly fileManager: DownloadDirManager) {
     // 使用文件管理器获取 Node.js 的下载目录
     this.downloadDir = this.fileManager.getComponentDownloadDir(
       process.env.NODE_INSTALL_DIR!,
     );
+    this.nodeInstallDir = this.fileManager.getComponentExtractDir(
+      process.env.NODE_HOME!,
+    );
     this.logger.debug(
       `[API] NodeService - Node.js 下载目录: ${this.downloadDir}`,
+    );
+    this.logger.debug(
+      `[API] NodeService - Node.js 安装目录: ${this.nodeInstallDir}`,
     );
   }
 
