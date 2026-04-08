@@ -1,18 +1,20 @@
-import { NestFactory } from '@nestjs/core';
 import * as os from 'os';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { loadPlatformConfig } from '@common/utils/env.utils';
+import { getLogger } from '@common/utils/logger.utils';
+
 // 在应用启动前加载平台配置
 loadPlatformConfig();
 
-console.log(
-  'Starting CordovaBuilder Admin API Server...',
-  process.env.NODE_INSTALL_DIR,
-  process.env.PORT,
-  os.platform(), //win32, linux, darwin
-  os.arch(), //x64, arm64
-);
+// 创建全局 Logger 实例
+const logger = getLogger('Bootstrap');
+
+logger.log('Starting CordovaBuilder Admin API Server...');
+logger.debug(`Node Install Dir: ${process.env.NODE_INSTALL_DIR}`);
+logger.debug(`Port: ${process.env.PORT}`);
+logger.debug(`Platform: ${os.platform()} (${os.arch()})`);
 
 /**
  * 启动并配置 NestJS 应用程序
@@ -20,8 +22,13 @@ console.log(
  * @returns Promise<void> 异步启动过程
  */
 async function bootstrap() {
-  // 创建 NestJS 应用程序实例
-  const app = await NestFactory.create(AppModule);
+  // 创建 NestJS 应用程序实例，配置日志选项
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'], // 启用所有日志级别
+  });
+
+  // 获取实际使用的端口
+  const port = process.env.PORT ?? 3000;
 
   // 配置 Swagger 文档
   const config = new DocumentBuilder()
@@ -38,9 +45,18 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // 启动服务器并监听端口（使用环境变量中的端口或默认 3000 端口）
-  await app.listen(process.env.PORT ?? 3000);
+  logger.log('Swagger documentation enabled at /api/docs');
+
+  // 启动服务器并监听端口
+  await app.listen(port);
+
+  logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`API Documentation: http://localhost:${port}/api/docs`);
 }
 
 // 执行启动函数
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  const errorMessage = error instanceof Error ? error.stack : String(error);
+  logger.error('Failed to start application', errorMessage);
+  process.exit(1);
+});

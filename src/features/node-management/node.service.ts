@@ -11,6 +11,7 @@ import {
 } from '@common/utils/platform.utils';
 import { downloadFile } from '@common/utils/download.utils';
 import { resolveFromRoot } from '@common/utils/path.utils';
+import { getLogger } from '@common/utils/logger.utils';
 
 /**
  * Node 管理服务
@@ -18,6 +19,8 @@ import { resolveFromRoot } from '@common/utils/path.utils';
  */
 @Injectable()
 export class NodeService {
+  private readonly logger = getLogger('NodeService');
+
   // 使用环境变量指定的下载目录,如果未设置则使用项目根目录下的
   private readonly downloadDir = resolveFromRoot(
     process.env.DOWNLOAD_DIR!, //非空断言运算符（!）
@@ -63,7 +66,7 @@ export class NodeService {
       const nodePath = process.env.PATH?.split(path.delimiter).find((p) =>
         p.includes('node'),
       );
-      console.log('检测到 Node.js 路径:', nodePath);
+      this.logger.debug(`检测到 Node.js 路径: ${nodePath}`);
       return !!nodePath || this.checkCommandExists('node');
     } catch {
       return false;
@@ -110,14 +113,14 @@ export class NodeService {
       // 确保下载目录存在
       this.ensureDownloadDir();
 
-      console.log(`开始下载 Node.js ${version}...`);
-      console.log(`下载 URL: ${downloadUrl}`);
-      console.log(`保存路径：${outputPath}`);
+      this.logger.log(`开始下载 Node.js ${version}...`);
+      this.logger.debug(`下载 URL: ${downloadUrl}`);
+      this.logger.debug(`保存路径：${outputPath}`);
 
       // 使用 Node.js 原生 HTTP 模块下载（跨平台兼容）
       await downloadFile(downloadUrl, outputPath);
 
-      console.log('下载完成');
+      this.logger.log('下载完成');
 
       return {
         success: true,
@@ -125,7 +128,7 @@ export class NodeService {
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      console.error('下载失败:', errorMessage);
+      this.logger.error(`下载失败: ${errorMessage}`);
       return {
         success: false,
         message: `下载失败：${errorMessage}`,
@@ -145,7 +148,7 @@ export class NodeService {
         const stdout = execSync('node --version', {
           encoding: 'utf-8',
         });
-        console.log('检测到 Node.js 版本:', stdout.trim());
+        this.logger.debug(`检测到 Node.js 版本: ${stdout.trim()}`);
         return stdout.trim();
       }
       return '未安装';
@@ -248,7 +251,10 @@ export class NodeService {
         fs.mkdirSync(this.downloadDir, { recursive: true });
       }
     } catch (error) {
-      console.error('创建下载目录失败:', error);
+      this.logger.error(
+        '创建下载目录失败',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }

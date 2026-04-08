@@ -4,7 +4,9 @@ import * as fs from 'fs';
 import { pipeline } from 'stream';
 
 import { promisify } from 'util';
+import { getLogger } from '@common/utils/logger.utils';
 
+const logger = getLogger('DownloadUtils');
 const pipelineAsync = promisify(pipeline);
 
 /**
@@ -52,11 +54,17 @@ async function probeUrl(url: string): Promise<boolean> {
 }
 
 /**
- * [辅助方法] 下载文件（跨平台兼容）
+ * [辅助方法] 下载文件(跨平台兼容)
  * @param url - 下载 URL
  * @param dest - 目标文件路径
  */
 export async function downloadFile(url: string, dest: string): Promise<void> {
+  // 检查文件是否已存在
+  if (fs.existsSync(dest)) {
+    logger.log(`文件已存在：${dest}`);
+    return;
+  }
+
   // 先探测 URL 是否可达
   const isReachable = await probeUrl(url);
   if (!isReachable) {
