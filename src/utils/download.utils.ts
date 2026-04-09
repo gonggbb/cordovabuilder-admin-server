@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { pipeline } from 'stream';
 
 import { promisify } from 'util';
-import { getLogger } from '@common/utils/logger.utils';
+import { getLogger } from '@utils/logger.utils';
 
 const logger = getLogger('DownloadUtils');
 const pipelineAsync = promisify(pipeline);

@@ -53,3 +53,9 @@ const gradleUrl =
 // 2. github-releases.githubusercontent.com → 302 → s3.amazonaws.com
 // 3. s3.amazonaws.com → 200 OK (开始下载)
 ```
+
+# npm test -- app.controller.spec.ts
+
+Remove-Item "c:\worksapce\cusworksapce\cordovabuilder-admin\cordovabuilder-admin-server\src\common\interfaces\file-manager.interface.ts" -ErrorAction SilentlyContinue
+
+cd c:\worksapce\cusworksapce\cordovabuilder-admin\cordovabuilder-admin-server; pnpm run format

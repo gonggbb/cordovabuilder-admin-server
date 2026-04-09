@@ -5,9 +5,9 @@ import * as fs from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import extractZip from 'extract-zip';
-import { getLogger } from '@common/utils/logger.utils';
-import { downloadFile } from '@common/utils/download.utils';
-import { DownloadDirManager } from '@features/file-management';
+import { getLogger } from '@utils/logger.utils';
+import { downloadFile } from '@utils/download.utils';
+import { DownloadDirManager } from '@shared/file-management';
 
 const execAsync = promisify(exec);
 

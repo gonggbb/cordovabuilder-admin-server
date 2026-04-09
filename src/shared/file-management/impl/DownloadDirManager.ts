@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
 import { BaseFileManager } from '../base/BaseFileManager';
-import { resolveFromRoot } from '@common/utils/path.utils';
+import { resolveFromRoot } from '@utils/path.utils';
 
 /**
  * 下载目录管理器

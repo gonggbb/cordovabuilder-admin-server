@@ -2,8 +2,8 @@ import * as os from 'os';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { loadPlatformConfig } from '@common/utils/env.utils';
-import { getLogger } from '@common/utils/logger.utils';
+import { loadPlatformConfig } from '@utils/env.utils';
+import { getLogger } from '@utils/logger.utils';
 
 // 在应用启动前加载平台配置
 loadPlatformConfig();

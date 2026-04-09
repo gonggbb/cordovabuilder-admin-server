@@ -6,6 +6,7 @@ import { JavaManagementModule } from './features/java-management/java.module';
 import { NodeManagementModule } from './features/node-management/node.module';
 import { SdkModule } from './features/sdk-management/sdk.module';
 import { CmdlineToolsModule } from './features/cmdline-management/cmdline.module';
+import { EnvModule } from './features/env-management/env.module';
 
 /**
  * 应用模块定义
@@ -22,6 +23,7 @@ import { CmdlineToolsModule } from './features/cmdline-management/cmdline.module
     NodeManagementModule,
     SdkModule,
     CmdlineToolsModule,
+    EnvModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -3,10 +3,7 @@ import { execSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import {
-  getErrorMessage,
-  getErrorMessageOrDefault,
-} from '@common/utils/error.utils';
+import { getErrorMessage, getErrorMessageOrDefault } from '@utils/error.utils';
 
 /**
  * Android SDK 管理服务

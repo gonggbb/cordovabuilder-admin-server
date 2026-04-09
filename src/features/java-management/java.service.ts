@@ -2,15 +2,15 @@ import { Injectable } from '@nestjs/common';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { getErrorMessage } from '@common/utils/error.utils';
+import { getErrorMessage } from '@utils/error.utils';
 import {
   getJdkPlatformIdentifier,
   getNormalizedArchName,
-} from '@common/utils/platform.utils';
-import { getLogger } from '@common/utils/logger.utils';
-import { DownloadDirManager } from '@features/file-management';
-import { downloadFile } from '@common/utils/download.utils';
-import { extractArchive } from '@common/utils/archive.utils';
+} from '@utils/platform.utils';
+import { getLogger } from '@utils/logger.utils';
+import { DownloadDirManager } from '@shared/file-management';
+import { downloadFile } from '@utils/download.utils';
+import { extractArchive } from '@utils/archive.utils';
 
 /**
  * Java 管理服务

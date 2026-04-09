@@ -24,6 +24,15 @@
       ],
       "@features/*": [
         "src/features/*"
+      ],
+      "@shared/*": [
+        "src/shared/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@type/*": [
+        "src/type/*"
       ]
     },
     "incremental": true,

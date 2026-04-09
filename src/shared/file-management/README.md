@@ -19,21 +19,24 @@ file-management/
 ## 🏗️ 分层设计
 
 ### 1. 接口层 (`interfaces/`)
+
 - **IFileManager**: 定义文件管理的标准操作契约
 - 职责: 声明 `exists`, `ensureDirectory`, `ensureFile`, `remove`, `getStats` 等方法
 - 优势: 其他模块可以依赖此接口,而不依赖具体实现
 
 ### 2. 抽象基类层 (`base/`)
+
 - **BaseFileManager**: 实现 IFileManager 接口的通用逻辑
 - 职责: 提供文件检测、创建、删除等基础功能的默认实现
-- 特点: 
+- 特点:
   - 包含完整的错误处理和日志记录
   - 提供受保护的辅助方法 (`isValidPath`, `normalizePath`)
   - 可被其他具体类继承扩展
 
 ### 3. 具体实现层 (`impl/`)
+
 - **DownloadDirManager**: 针对下载目录的特定管理功能
-- 职责: 
+- 职责:
   - 管理组件下载目录
   - 清理下载文件
   - 计算目录使用情况
@@ -54,7 +57,7 @@ export class NodeService {
   async downloadNode(version: string) {
     // 获取 Node.js 的下载目录
     const downloadDir = this.fileManager.getComponentDownloadDir('node');
-    
+
     // 检查目录是否存在
     if (this.fileManager.exists(downloadDir)) {
       // ...
@@ -68,7 +71,7 @@ export class NodeService {
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { BaseFileManager } from '@features/file-management/base/BaseFileManager';
-import { getLogger } from '@common/utils/logger.utils';
+import { getLogger } from '@utils/logger.utils';
 
 @Injectable()
 export class InstallDirManager extends BaseFileManager {
@@ -101,29 +104,31 @@ export class InstallDirManager extends BaseFileManager {
 
 ### IFileManager 接口方法
 
-| 方法 | 说明 | 参数 | 返回值 |
-|------|------|------|--------|
-| `exists` | 检查文件或目录是否存在 | `targetPath: string` | `boolean` |
-| `ensureDirectory` | 确保目录存在,不存在则创建 | `dirPath: string, recursive?: boolean` | `void` |
-| `ensureFile` | 确保文件存在,不存在则创建空文件 | `filePath: string` | `void` |
-| `remove` | 删除文件或目录 | `targetPath: string, recursive?: boolean` | `void` |
-| `getStats` | 获取文件或目录信息 | `targetPath: string` | `fs.Stats \| null` |
+| 方法              | 说明                            | 参数                                      | 返回值             |
+| ----------------- | ------------------------------- | ----------------------------------------- | ------------------ |
+| `exists`          | 检查文件或目录是否存在          | `targetPath: string`                      | `boolean`          |
+| `ensureDirectory` | 确保目录存在,不存在则创建       | `dirPath: string, recursive?: boolean`    | `void`             |
+| `ensureFile`      | 确保文件存在,不存在则创建空文件 | `filePath: string`                        | `void`             |
+| `remove`          | 删除文件或目录                  | `targetPath: string, recursive?: boolean` | `void`             |
+| `getStats`        | 获取文件或目录信息              | `targetPath: string`                      | `fs.Stats \| null` |
 
 ### DownloadDirManager 扩展方法
 
-| 方法 | 说明 | 参数 | 返回值 |
-|------|------|------|--------|
-| `getComponentDownloadDir` | 获取组件下载目录 | `componentName: string` | `string` |
-| `cleanComponentDownloads` | 清理组件下载文件 | `componentName: string` | `{ success, message }` |
-| `getDownloadDirUsage` | 获取下载目录使用情况 | - | `{ success, sizeBytes?, message? }` |
+| 方法                      | 说明                 | 参数                    | 返回值                              |
+| ------------------------- | -------------------- | ----------------------- | ----------------------------------- |
+| `getComponentDownloadDir` | 获取组件下载目录     | `componentName: string` | `string`                            |
+| `cleanComponentDownloads` | 清理组件下载文件     | `componentName: string` | `{ success, message }`              |
+| `getDownloadDirUsage`     | 获取下载目录使用情况 | -                       | `{ success, sizeBytes?, message? }` |
 
 ## 📝 日志规范
 
 所有方法遵循项目日志规范:
+
 - **API 方法**: 日志前缀 `[API]`
 - **辅助方法**: 日志前缀 `[Helper]`
 
 示例:
+
 ```typescript
 this.logger.log('[API] ensureDirectory - 创建目录: /path/to/dir');
 this.logger.debug('[Helper] normalizePath - 规范化路径');

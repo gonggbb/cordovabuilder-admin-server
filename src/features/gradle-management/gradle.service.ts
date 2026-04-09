@@ -3,10 +3,9 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { DownloadDirManager } from '@features/file-management';
-import { getLogger } from '@common/utils/logger.utils';
-import { downloadFile } from '@common/utils/download.utils';
-import { extractArchive } from '@common/utils/archive.utils';
+import { DownloadDirManager } from '@shared/file-management';
+import { getLogger } from '@utils/logger.utils';
+import { downloadFile } from '@utils/download.utils';
 
 /**
  * Gradle 管理服务

@@ -13,7 +13,7 @@ import { FileManagementModule } from '@features/file-management';
 import { YourService } from './your.service';
 
 @Module({
-  imports: [FileManagementModule],  // ← 导入文件管理模块
+  imports: [FileManagementModule], // ← 导入文件管理模块
   providers: [YourService],
 })
 export class YourFeatureModule {}
@@ -27,7 +27,7 @@ export class YourFeatureModule {}
 // src/features/your-feature/your.service.ts
 import { Injectable } from '@nestjs/common';
 import { DownloadDirManager } from '@features/file-management';
-import { getLogger } from '@common/utils/logger.utils';
+import { getLogger } from '@utils/logger.utils';
 
 @Injectable()
 export class YourService {
@@ -46,7 +46,7 @@ export class YourService {
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { DownloadDirManager } from '@features/file-management';
-import { getLogger } from '@common/utils/logger.utils';
+import { getLogger } from '@utils/logger.utils';
 import * as path from 'path';
 
 @Injectable()
@@ -69,7 +69,7 @@ export class NodeService {
     this.fileManager.ensureDirectory(this.downloadDir);
 
     const filePath = path.join(this.downloadDir, `node-${version}.tar.xz`);
-    
+
     // 检查文件是否已存在
     if (this.fileManager.exists(filePath)) {
       this.logger.log('[API] 文件已存在,跳过下载');
@@ -131,11 +131,12 @@ export class SdkService {
   constructor(private readonly fileManager: DownloadDirManager) {}
 
   async downloadSdkComponent(component: string): Promise<void> {
-    const sdkDownloadDir = this.fileManager.getComponentDownloadDir('android-sdk');
-    
+    const sdkDownloadDir =
+      this.fileManager.getComponentDownloadDir('android-sdk');
+
     // 确保目录存在
     this.fileManager.ensureDirectory(sdkDownloadDir);
-    
+
     // 获取目录信息
     const stats = this.fileManager.getStats(sdkDownloadDir);
     if (stats && stats.isDirectory()) {
@@ -205,7 +206,8 @@ export class MyService {
 
   constructor(private readonly fileManager: DownloadDirManager) {
     // 在构造函数中获取并缓存目录路径
-    this.componentDir = this.fileManager.getComponentDownloadDir('my-component');
+    this.componentDir =
+      this.fileManager.getComponentDownloadDir('my-component');
   }
 }
 ```
@@ -215,16 +217,16 @@ export class MyService {
 ```typescript
 async downloadFile(url: string, fileName: string): Promise<void> {
   const filePath = path.join(this.componentDir, fileName);
-  
+
   // 先检查文件是否已存在
   if (this.fileManager.exists(filePath)) {
     this.logger.log('[API] 文件已存在,跳过下载');
     return;
   }
-  
+
   // 确保目录存在
   this.fileManager.ensureDirectory(this.componentDir);
-  
+
   // 执行下载...
 }
 ```
@@ -272,8 +274,8 @@ async cleanupDownloads(): Promise<void> {
 // src/features/file-management/impl/InstallDirManager.ts
 import { Injectable } from '@nestjs/common';
 import { BaseFileManager } from '../base/BaseFileManager';
-import { getLogger } from '@common/utils/logger.utils';
-import { resolveFromRoot } from '@common/utils/path.utils';
+import { getLogger } from '@utils/logger.utils';
+import { resolveFromRoot } from '@utils/path.utils';
 
 @Injectable()
 export class InstallDirManager extends BaseFileManager {
@@ -282,7 +284,9 @@ export class InstallDirManager extends BaseFileManager {
 
   constructor() {
     super();
-    this.installBaseDir = resolveFromRoot(process.env.INSTALL_DIR || 'installs');
+    this.installBaseDir = resolveFromRoot(
+      process.env.INSTALL_DIR || 'installs',
+    );
     this.ensureDirectory(this.installBaseDir);
   }
 

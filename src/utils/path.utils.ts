@@ -6,7 +6,7 @@ import * as path from 'path';
  * @returns 项目根目录的绝对路径
  */
 export function getAppRootDir(): string {
-  return path.resolve(__dirname, '../../..');
+  return path.resolve(__dirname, '../..');
 }
 
 /**

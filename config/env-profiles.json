@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "default": {
+      "sdk": "30.0.3",
+      "gradle": "7.1.1",
+      "java": "11",
+      "node": "18.20.8"
+    }
+  },
+  "currentProfile": "default"
+}

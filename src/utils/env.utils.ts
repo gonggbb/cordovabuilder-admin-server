@@ -2,8 +2,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import dotenv from 'dotenv';
-import { getConfigDir } from '@common/utils/path.utils';
-import { getLogger } from '@common/utils/logger.utils';
+import { getConfigDir } from '@utils/path.utils';
+import { getLogger } from '@utils/logger.utils';
 
 // 创建日志实例
 const logger = getLogger('EnvConfig');

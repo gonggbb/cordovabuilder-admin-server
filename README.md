@@ -96,3 +96,34 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## pnpm 包管理工具
+
+## 项目结构
+
+src/
+├── app.module.ts // 根模块，导入所有业务模块
+├── main.ts // 入口文件，初始化Nest应用
+├── config/ // 全局配置（如数据库、JWT、邮件）
+├── common/ // 通用资源
+│ ├── decorators/ // 自定义装饰器
+│ ├── filters/ // 异常过滤器
+│ ├── guards/ // 守卫 (Auth, Roles)
+│ ├── interceptors/ // 拦截器
+│ ├── middleware/ // 中间件
+│ └── pipes/ // 管道 (Validation)
+├── modules/ // 业务功能模块 (按功能拆分)
+│ ├── user/
+│ │ ├── dto/ // 数据传输对象
+│ │ ├── entities/ // 数据库实体
+│ │ ├── interfaces/
+│ │ ├── user.controller.ts
+│ │ ├── user.module.ts
+│ │ ├── user.service.ts
+│ │ └── user.service.spec.ts // 单元测试
+│ └── auth/
+└── shared/ // 共享服务 (如数据库连接)
+
+## AI 生成的记忆描述文件放在docs文件夹下
+
+- 创建一个名为docs的文件夹，并使用Markdown格式编写一个名为README.md的文件

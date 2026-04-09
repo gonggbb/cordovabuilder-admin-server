@@ -7,10 +7,10 @@ import {
   isWindows,
   isMacOS,
   getFileExtensionByPlatform,
-} from '@common/utils/platform.utils';
-import { downloadFile } from '@common/utils/download.utils';
-import { getLogger } from '@common/utils/logger.utils';
-import { DownloadDirManager } from '@features/file-management';
+} from '@utils/platform.utils';
+import { downloadFile } from '@utils/download.utils';
+import { getLogger } from '@utils/logger.utils';
+import { DownloadDirManager } from '@shared/file-management';
 
 /**
  * Node 管理服务
