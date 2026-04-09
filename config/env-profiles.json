@@ -11,12 +11,6 @@
       "gradle": "8.14.2",
       "java": "17.0.10",
       "node": "20.19.5"
-    },
-    "my-cordova-project2": {
-      "sdk": "36.0.0",
-      "gradle": "8.14.2",
-      "java": "17.0.10",
-      "node": "20.19.5"
     }
   },
   "currentProfile": "default"

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Terminal Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        
+        .connection-form {
+            background-color: #252526;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9cdcfe;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #0e639c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #1177bb;
+        }
+        
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        .terminal {
+            background-color: #1e1e1e;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 10px;
+            height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        
+        .status.connected {
+            background-color: #1e3a1e;
+            color: #4ec9b0;
+        }
+        
+        .status.disconnected {
+            background-color: #3a1e1e;
+            color: #f48771;
+        }
+        
+        .status.connecting {
+            background-color: #3a3a1e;
+            color: #dcdcaa;
+        }
+        
+        .input-line {
+            display: flex;
+            margin-top: 10px;
+        }
+        
+        .prompt {
+            color: #4ec9b0;
+            margin-right: 5px;
+        }
+        
+        #commandInput {
+            flex: 1;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            padding: 8px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ SSH Terminal WebSocket Test</h1>
+        
+        <div id="status" class="status disconnected">
+            状态: 未连接
+        </div>
+        
+        <div class="connection-form">
+            <h2>SSH 连接配置</h2>
+            <div class="form-group">
+                <label for="host">主机地址:</label>
+                <input type="text" id="host" placeholder="例如: 192.168.1.100" value="localhost">
+            </div>
+            
+            <div class="form-group">
+                <label for="port">端口:</label>
+                <input type="number" id="port" value="22">
+            </div>
+            
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" placeholder="例如: admin">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" placeholder="输入密码">
+            </div>
+            
+            <button id="connectBtn" onclick="connect()">连接</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>断开</button>
+        </div>
+        
+        <div class="terminal" id="terminal"></div>
+        
+        <div class="input-line">
+            <span class="prompt">$</span>
+            <input type="text" id="commandInput" placeholder="输入命令..." disabled onkeypress="handleKeyPress(event)">
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let isConnected = false;
+
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = `状态: ${message}`;
+        }
+
+        function appendToTerminal(text) {
+            const terminal = document.getElementById('terminal');
+            terminal.textContent += text;
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function clearTerminal() {
+            document.getElementById('terminal').textContent = '';
+        }
+
+        function connect() {
+            const host = document.getElementById('host').value;
+            const port = parseInt(document.getElementById('port').value);
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!host || !port || !username) {
+                alert('请填写所有必填字段');
+                return;
+            }
+
+            updateStatus('connecting', '正在连接...');
+            appendToTerminal(`正在连接到 ${host}:${port}...\n`);
+
+            // 创建 WebSocket 连接
+            ws = new WebSocket('ws://localhost:3000/ws/ssh');
+
+            ws.onopen = () => {
+                appendToTerminal('WebSocket 已连接\n');
+                
+                // 发送 SSH 连接配置
+                ws.send(JSON.stringify({
+                    type: 'connect',
+                    data: {
+                        host: host,
+                        port: port,
+                        username: username,
+                        password: password
+                    }
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                
+                switch (message.type) {
+                    case 'connected':
+                        isConnected = true;
+                        updateStatus('connected', `已连接 (会话: ${message.data.sessionId.substring(0, 8)}...)`);
+                        appendToTerminal(`✓ SSH 连接成功\n\n`);
+                        document.getElementById('connectBtn').disabled = true;
+                        document.getElementById('disconnectBtn').disabled = false;
+                        document.getElementById('commandInput').disabled = false;
+                        document.getElementById('commandInput').focus();
+                        break;
+                        
+                    case 'output':
+                        appendToTerminal(message.data);
+                        break;
+                        
+                    case 'error':
+                        appendToTerminal(`\n✗ 错误: ${message.data}\n`);
+                        updateStatus('disconnected', '连接失败');
+                        break;
+                        
+                    case 'disconnected':
+                        handleDisconnect();
+                        break;
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                appendToTerminal(`\n✗ WebSocket 错误\n`);
+                updateStatus('disconnected', 'WebSocket 错误');
+            };
+
+            ws.onclose = () => {
+                appendToTerminal(`\nWebSocket 连接已关闭\n`);
+                handleDisconnect();
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        function handleDisconnect() {
+            isConnected = false;
+            updateStatus('disconnected', '未连接');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            document.getElementById('commandInput').disabled = true;
+        }
+
+        function sendCommand() {
+            if (!isConnected || !ws) {
+                return;
+            }
+
+            const input = document.getElementById('commandInput');
+            const command = input.value + '\n';
+            
+            ws.send(JSON.stringify({
+                type: 'command',
+                data: command
+            }));
+            
+            input.value = '';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendCommand();
+            }
+        }
+    </script>
+</body>
+</html>

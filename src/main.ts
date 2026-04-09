@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { loadPlatformConfig } from '@utils/env.utils';
 import { getLogger } from '@utils/logger.utils';
+import { WsAdapter } from '@nestjs/platform-ws';
 
 // 在应用启动前加载平台配置
 loadPlatformConfig();
@@ -27,6 +28,9 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'], // 启用所有日志级别
   });
 
+  // 配置 WebSocket 适配器
+  app.useWebSocketAdapter(new WsAdapter(app));
+
   // 启用 CORS 支持
   const corsOrigins = process.env.CORS_ORIGINS?.split(',') || ['*'];
   app.enableCors({
@@ -48,6 +52,7 @@ async function bootstrap() {
     .addTag('node', 'Node.js 管理相关接口')
     .addTag('sdk', 'SDK 管理相关接口')
     .addTag('cmdline-tools', 'Android SDK Command Line Tools 管理相关接口')
+    .addTag('ssh', 'SSH 终端相关接口')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -59,6 +64,7 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`WebSocket SSH endpoint: ws://localhost:${port}/ws/ssh`);
   logger.log(`API Documentation: http://localhost:${port}/api/docs`);
 }
 
