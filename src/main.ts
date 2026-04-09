@@ -27,6 +27,14 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'], // 启用所有日志级别
   });
 
+  // 启用 CORS 支持
+  const corsOrigins = process.env.CORS_ORIGINS?.split(',') || ['*'];
+  app.enableCors({
+    origin: corsOrigins.includes('*') ? true : corsOrigins,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
+
   // 获取实际使用的端口
   const port = process.env.PORT ?? 3000;
 
