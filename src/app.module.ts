@@ -7,7 +7,6 @@ import { NodeManagementModule } from './features/node-management/node.module';
 import { SdkModule } from './features/sdk-management/sdk.module';
 import { CmdlineToolsModule } from './features/cmdline-management/cmdline.module';
 import { EnvModule } from './features/env-management/env.module';
-import { SshModule } from './features/ssh-terminal/ssh.module';
 
 /**
  * 应用模块定义
@@ -25,7 +24,6 @@ import { SshModule } from './features/ssh-terminal/ssh.module';
     SdkModule,
     CmdlineToolsModule,
     EnvModule,
-    SshModule,
   ],
   controllers: [AppController],
   providers: [AppService],

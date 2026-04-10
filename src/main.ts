@@ -52,7 +52,6 @@ async function bootstrap() {
     .addTag('node', 'Node.js 管理相关接口')
     .addTag('sdk', 'SDK 管理相关接口')
     .addTag('cmdline-tools', 'Android SDK Command Line Tools 管理相关接口')
-    .addTag('ssh', 'SSH 终端相关接口')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -64,7 +63,6 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`Application is running on: http://localhost:${port}`);
-  logger.log(`WebSocket SSH endpoint: ws://localhost:${port}/ws/ssh`);
   logger.log(`API Documentation: http://localhost:${port}/api/docs`);
 }
 
